@@ -1,40 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Booking Link Scheduling Feature
 
-## Getting Started
+## Overview
+Build an interview scheduling feature in Next.js where users can view, and book available interview slots. 
 
-First, run the development server:
+You've seen how candidate.fyi offers a single available interview slot now let's build a feature where users can book multiple slots / interviews at once.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🎯 Objective
+Create a user-friendly interface that allows candidates to:
+- Browse available interview schedules
+- Book their preferred slots
+
+## 🛠️ Technical Stack
+- **Frontend**: Next.js
+- **Styling**: Choose from:
+  - Tailwind CSS
+  - Chakra UI
+
+## 📋 Core Requirements
+
+### 1. Schedule Display
+- Fetch and display interview schedules
+- Present data in an organized accessible layout
+- Allow toggling based on preferred date 
+
+
+### 3. Booking System
+- Implement booking functionality
+- Display review page before booking
+- Display confirmation page after booking
+- Show success/error states
+
+## 🔌 API Specifications
+
+### GET /api/schedules
+Returns available interview slots
+
+#### Sample Response
+```json
+{
+  "count": 2,
+  "results": {
+    "interviewCount": 2,
+    "scheduleName": "Interview Superday",
+    "interviews": [
+      {
+        "id": "1",
+        "interviewName": "Technical Interview",
+        "interviewers": [{"name": "Alice Johnson", "id": "1"}],
+        "startTime": "2025-01-22T09:00:00Z",
+        "endTime": "2025-01-22T10:00:00Z"
+      },
+      {
+        "id": "2",
+        "interviewName": "Behavioral Interview",
+        "interviewers": [{"name": "Bob Smith", "id": "2"}],
+        "startTime": "2025-01-22T11:00:00Z",
+        "endTime": "2025-01-22T12:00:00Z"
+      }
+    ]
+  }
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### POST /api/book
+Books a selected interview slot
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+#### Request Body
+```json
+[
+    {
+        "startTime": "2025-01-22T09:00:00Z",
+        "interviewId": "1",
+        "interviewers": [{"id": "1"}],
+    }
+]
+```
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+#### Response
+```json
+{
+  "success": true,
+  "message": "Booking confirmed."
+}
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## 📝 Implementation Tasks
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. API Route Setup
+- Create `/pages/api/schedules.js`
+- Implement mock data generation using Faker.js
 
-## Learn More
+### 2. Frontend Development
+- Implement data fetching to fetch schedules from `/api/schedules`
+- Create responsive UI components
+- Format timestamps for readability and allow timezone selection
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Interaction Features
+- Add booking confirmation flow
+    - Are there any edge cases to consider?
+- Allow for me to be able to refresh the page without losing my selection
+- Allow for me to be able to go back from the review page to the selection screen with my selection still there
+- Handle API responses
+    - Are there any edge cases to consider?
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+### 4. Optional Enhancements
+- Add comprehensive styling
+- Make it your own and have fun with it!
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## 📦 Submission Requirements
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Repository Contents
+- Complete source code
+- Comprehensive README
+- Test files (if implemented)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+### Documentation Should Include
+- Setup instructions
+- Design decisions
+- Technical trade-offs
+- Assumptions made
+
+## ⏱️ Time Constraint
+- Recommended time: 2-4 hours
+- Focus on core functionality over completeness
+
+## 🎯 Evaluation Criteria
+
+| Criterion | Description |
+|-----------|-------------|
+| Functionality | Meets all core requirements |
+| Code Quality | Clean, maintainable, well-structured |
+| UX Design | Intuitive and user-friendly |
+| Documentation | Clear and comprehensive |
+
+## 💡 Notes
+This is a practical exercise designed to evaluate real-world development skills. Focus on writing clean, maintainable code with clear documentation. Comments explaining your approach are encouraged.
