@@ -11,6 +11,7 @@ const interviewNames = [
 ];
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  faker.seed(123);
   const generateInterviewer = (id: number) => ({
     name: faker.person.fullName(),
     id: id.toString(),
