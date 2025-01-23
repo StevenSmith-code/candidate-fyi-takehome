@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Schedule, SelectedInterview } from '../../../types';
+import { Spinner } from '@/lib/spinner';
 
 const ConfirmationPage = () => {
 
@@ -125,6 +126,7 @@ const ConfirmationPage = () => {
             </div>
           );
         })}
+        {loading && <div className="flex justify-center items-center"><Spinner/></div>}
       </div>
         {error && <p className="text-red-500">{error.message}</p>}
       <div className="mt-8 flex justify-between items-center">
