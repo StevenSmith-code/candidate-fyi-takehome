@@ -203,7 +203,7 @@ export function InterviewScheduler() {
       </Carousel>
 
       {getSelectedFromUrl().length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-blue-400/50 z-10 border-t">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-card z-10 border-t">
           <div className="max-w-4xl mx-auto flex justify-between items-center">
             <p>{getSelectedFromUrl().length} interviews selected</p>
             <Button onClick={() => router.push({
