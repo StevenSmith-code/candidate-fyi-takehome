@@ -2,6 +2,7 @@ import { Schedule } from "../../types";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { useEffect, useState } from "react";
 
 interface InterviewCarouselProps {
   schedules: Schedule[];
@@ -18,6 +19,13 @@ export function InterviewCarousel({
   onInterviewSelect,
   getSelectedFromUrl 
 }: InterviewCarouselProps) {
+
+
+
+  // const sortTimeslotsByRibbon = (selectedDate) =>{ 
+  //   schedules.filter()
+  // }
+
   const formatDateTime = (dateString: string, timeOnly: boolean = false) => {
     if (timeOnly) {
       return new Date(dateString).toLocaleTimeString([], { 

@@ -1,4 +1,3 @@
-
 import { useRouter } from 'next/router';
 import { SelectedInterview } from "../../../types";
 import { Spinner } from "@/lib/spinner";
@@ -8,7 +7,7 @@ import { useTimezone } from "@/hooks/useTimezone";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { InterviewCarousel } from "@/components/InterviewCarousel";
 import { BookingFooter } from "@/components/BookingFooter";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 
 export function InterviewScheduler() {
@@ -16,6 +15,17 @@ export function InterviewScheduler() {
   const { schedules, loading } = useSchedules();
   const { timezone, updateTimezone } = useTimezone();
   const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [dateForRibbon, setDateForRibbon] = useState([])
+
+  const getDatesFromSchedules = () => {
+    return schedules.map((schedule, index) => (
+     <div key={index}>{schedule.interviews[0].startTime}</div>
+    ))
+  }
+
+  useEffect(() => {
+    console.log(dateForRibbon)
+  }, [])
 
   // Get selected interviews from URL params
   const getSelectedFromUrl = (): SelectedInterview[] => {
@@ -46,37 +56,52 @@ export function InterviewScheduler() {
 
   // Modified toggle function to update URL
   const toggleInterviewSelection = (scheduleId: number, interviewId: string) => {
-    setSelectionError(null); // Reset error on new selection
+    setSelectionError(null);
     const currentSelections = getSelectedFromUrl();
+
+    // Check if this specific interview is already selected
     const isSelected = currentSelections.some(
       (selectedInterview) => 
         selectedInterview.scheduleId === scheduleId && 
         selectedInterview.interviewId === interviewId
     );
     
+    // Time conflict checking (only when adding a new interview)
     if (!isSelected) {
-      // Check for time conflicts
-      const newInterview = schedules[scheduleId].interviews.find(interview => interview.id === interviewId);
+      // Find the interview we're trying to add
+      const newInterview = schedules[scheduleId].interviews.find(
+        interview => interview.id === interviewId
+      );
+
+      // Check against each currently selected interview for conflicts
       const hasTimeConflict = currentSelections.some(selection => {
+        // Find the existing interview we're comparing against
         const existingInterview = schedules[selection.scheduleId].interviews.find(
           interview => interview.id === selection.interviewId
         );
+        
+        // Safety check - if either interview isn't found, no conflict
         if (!newInterview || !existingInterview) return false;
         
+        // Convert time strings to Date objects for comparison
         const newStart = new Date(newInterview.startTime);
         const newEnd = new Date(newInterview.endTime);
         const existingStart = new Date(existingInterview.startTime);
         const existingEnd = new Date(existingInterview.endTime);
         
+        // Check for overlap: new interview starts before existing ends
+        // AND new interview ends after existing starts
         return (newStart < existingEnd && newEnd > existingStart);
       });
 
+      // If there's a conflict, set error and stop
       if (hasTimeConflict) {
         setSelectionError("This interview time conflicts with another selected interview");
         return;
       }
     }
     
+    // Update selections
     let newSelections = isSelected
       ? currentSelections.filter(
           (selectedInterview) => 
@@ -85,6 +110,7 @@ export function InterviewScheduler() {
         )
       : [...currentSelections, { scheduleId, interviewId }];
     
+    // Update URL with new selections
     updateUrlWithSelections(newSelections);
   };
 
@@ -96,6 +122,8 @@ export function InterviewScheduler() {
         timezone={timezone} 
         onTimezoneChange={updateTimezone} 
       />
+
+      {(getDatesFromSchedules())}
 
       <InterviewCarousel 
         schedules={schedules}
