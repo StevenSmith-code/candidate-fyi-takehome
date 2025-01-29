@@ -11,14 +11,18 @@ import {
     CarouselPrevious,
   } from "@/components/ui/carousel"
   import Autoplay from "embla-carousel-autoplay"
-  
+import { useSchedules } from "@/hooks/useSchedules";
+import { useTimezone } from "@/hooks/useTimezone";
+import { TimezoneSelector } from "@/components/TimezoneSelector";
+import { InterviewCarousel } from "@/components/InterviewCarousel";
+import { BookingFooter } from "@/components/BookingFooter";
 
 
 export function InterviewScheduler() {
   const router = useRouter();
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const { schedules, loading } = useSchedules();
+  const { timezone, updateTimezone } = useTimezone();
+  const [selectionError, setSelectionError] = useState<string | null>(null);
 
   // Get selected interviews from URL params
   const getSelectedFromUrl = (): SelectedInterview[] => {
@@ -49,6 +53,7 @@ export function InterviewScheduler() {
 
   // Modified toggle function to update URL
   const toggleInterviewSelection = (scheduleId: number, interviewId: string) => {
+    setSelectionError(null); // Reset error on new selection
     const currentSelections = getSelectedFromUrl();
     const isSelected = currentSelections.some(
       (selectedInterview) => 
@@ -56,166 +61,67 @@ export function InterviewScheduler() {
         selectedInterview.interviewId === interviewId
     );
     
-    let newSelections;
-    if (isSelected) {
-      newSelections = currentSelections.filter(
-        (selectedInterview) => 
-          !(selectedInterview.scheduleId === scheduleId && 
-            selectedInterview.interviewId === interviewId)
-      );
-    } else {
-      newSelections = [...currentSelections, { scheduleId, interviewId }];
+    if (!isSelected) {
+      // Check for time conflicts
+      const newInterview = schedules[scheduleId].interviews.find(interview => interview.id === interviewId);
+      const hasTimeConflict = currentSelections.some(selection => {
+        const existingInterview = schedules[selection.scheduleId].interviews.find(
+          interview => interview.id === selection.interviewId
+        );
+        if (!newInterview || !existingInterview) return false;
+        
+        const newStart = new Date(newInterview.startTime);
+        const newEnd = new Date(newInterview.endTime);
+        const existingStart = new Date(existingInterview.startTime);
+        const existingEnd = new Date(existingInterview.endTime);
+        
+        return (newStart < existingEnd && newEnd > existingStart);
+      });
+
+      if (hasTimeConflict) {
+        setSelectionError("This interview time conflicts with another selected interview");
+        return;
+      }
     }
+    
+    let newSelections = isSelected
+      ? currentSelections.filter(
+          (selectedInterview) => 
+            !(selectedInterview.scheduleId === scheduleId && 
+              selectedInterview.interviewId === interviewId)
+        )
+      : [...currentSelections, { scheduleId, interviewId }];
     
     updateUrlWithSelections(newSelections);
   };
 
-  useEffect(() => {
-    fetchSchedules();
-  }, []);
-
-  useEffect(() => {
-    const savedTimezone = localStorage.getItem('preferredTimezone');
-    if (savedTimezone) {
-      setTimezone(savedTimezone);
-    }
-  }, []);
-
-  const fetchSchedules = async () => {
-    try {
-      const response = await fetch("/api/schedules");
-      const data: ScheduleResponse = await response.json();
-      setSchedules(data.results);
-    } catch (error) {
-      console.error("Error fetching schedules:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDateTime = (dateString: string, timeOnly: boolean = false) => {
-    if (timeOnly) {
-      return new Date(dateString).toLocaleTimeString([], { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        timeZone: timezone,
-        hour12: true
-      });
-    }
-    return new Date(dateString).toLocaleDateString([], {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: timezone,
-      hour12: true
-    });
-  };
-
-  if (loading) return <div className="h-full w-full flex items-center justify-center"><Spinner/></div>
+  if (loading) return <div className="h-full w-full flex items-center justify-center"><Spinner/></div>;
 
   return (
     <div className="flex justify-between items-center w-3/4 mx-auto p-8 bg-card rounded-lg">
-      <div className="flex flex-col justify-center items-center w-2/5 h-[620px] bg-green-500/50 rounded-lg">
-        <h1 className="text-2xl mb-4 text-primary font-bold">Interview Schedules</h1>
-        <p className="text-primary mb-8">Select the interviews you would like to schedule</p>
-        <div className="flex items-center justify-center gap-4">
-            <p className="text-primary">Select Preferred Timezone</p>
-        <select 
-          className="p-2 border rounded-md"
-          value={timezone}
-          onChange={(e) => {
-            const newTimezone = e.target.value;
-            setTimezone(newTimezone);
-            localStorage.setItem('preferredTimezone', newTimezone);
-          }}
-        >
-          <option value="America/New_York">Eastern Time (ET)</option>
-          <option value="America/Chicago">Central Time (CT)</option>
-          <option value="America/Denver">Mountain Time (MT)</option>
-          <option value="America/Los_Angeles">Pacific Time (PT)</option>
-          <option value="UTC">UTC</option>
-        </select>
-        </div>
-      </div>
+      <TimezoneSelector 
+        timezone={timezone} 
+        onTimezoneChange={updateTimezone} 
+      />
 
-      <Carousel  plugins={[
-        Autoplay({
-          delay: 2000,
-        }),
-      ]} className="w-2/4 mr-10" opts={{
-        align: "start",
-        loop: true,
-      }}>
-        <CarouselContent>
-          {schedules.map((schedule, scheduleIndex) => (
-            <CarouselItem key={scheduleIndex}>
-              <div className="mb-8 p-8 rounded-lg h-full">
-                <h2 className="text-xl font-semibold mb-4">
-                  {schedule.scheduleName}
-                </h2>
-                <div className="grid gap-4">
-                  {schedule.interviews.map((interview) => {
-                    const selectedInterviews = getSelectedFromUrl();
-                    const isSelected = selectedInterviews.some(
-                      (selectedInterview) => selectedInterview.scheduleId === scheduleIndex && selectedInterview.interviewId === interview.id
-                    );
+      <InterviewCarousel 
+        schedules={schedules}
+        timezone={timezone}
+        selectionError={selectionError}
+        onInterviewSelect={toggleInterviewSelection}
+        getSelectedFromUrl={getSelectedFromUrl}
+      />
 
-                    return (
-                      <div
-                        key={interview.id}
-                        className={`p-4 border rounded-lg ${
-                          isSelected
-                            ? "border-primary bg-secondary/75"
-                            : "border-border bg-secondary"
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-medium">{interview.interviewName}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {formatDateTime(interview.startTime)} -{" "}
-                              {formatDateTime(interview.endTime, true)}
-                            </p>
-                            <p className="text-sm mt-1">
-                              Interviewers:{" "}
-                              {interview.interviewers.map((i) => i.name).join(", ")}
-                            </p>
-                          </div>
-                          <Button
-                            variant="default"
-                            onClick={() => toggleInterviewSelection(scheduleIndex, interview.id)}
-                          >
-                            {isSelected ? "Selected" : "Select"}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
-      </Carousel>
-
-      {getSelectedFromUrl().length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-card z-10 border-t">
-          <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <p>{getSelectedFromUrl().length} interviews selected</p>
-            <Button onClick={() => router.push({
-                pathname: "/review",
-                query: {
-                    selected: encodeURIComponent(JSON.stringify(getSelectedFromUrl())),
-                    timezone: timezone
-                }
-            })}>Proceed to Booking</Button>
-          </div>
-        </div>
-      )}
+      <BookingFooter 
+        selectedCount={getSelectedFromUrl().length}
+        onProceed={() => router.push({
+          pathname: "/review",
+          query: {
+            selected: encodeURIComponent(JSON.stringify(getSelectedFromUrl())),
+            timezone: timezone
+          }
+        })}
+      />
     </div>
   );
 }
