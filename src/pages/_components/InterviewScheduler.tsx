@@ -1,21 +1,14 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+
 import { useRouter } from 'next/router';
-import { Schedule, ScheduleResponse, SelectedInterview } from "../../../types";
+import { SelectedInterview } from "../../../types";
 import { Spinner } from "@/lib/spinner";
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-  } from "@/components/ui/carousel"
-  import Autoplay from "embla-carousel-autoplay"
+
 import { useSchedules } from "@/hooks/useSchedules";
 import { useTimezone } from "@/hooks/useTimezone";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { InterviewCarousel } from "@/components/InterviewCarousel";
 import { BookingFooter } from "@/components/BookingFooter";
+import { useState } from 'react';
 
 
 export function InterviewScheduler() {
